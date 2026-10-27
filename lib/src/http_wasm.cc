@@ -10,6 +10,7 @@
 #include "duckdb_static_extension.h"
 
 namespace duckdb {
+// Canonical HEAP* accesses let Emscripten refresh views after shared-memory growth.
 class HTTPWasmClient : public HTTPClient {
    public:
     explicit HTTPWasmClient(const string &proto_host_port) : HTTPClient(proto_host_port), host_port(proto_host_port) {}
@@ -108,9 +109,7 @@ class HTTPWasmClient : public HTTPClient {
 
                 var properArray = new Uint8Array(uInt8Array);
 
-                for (var iii = 0; iii < len; iii++) {
-                    Module.HEAPU8[iii + fileOnWasmHeap + 8] = properArray[iii];
-                }
+                HEAPU8.set(properArray, fileOnWasmHeap + 8);
 
                 var LEN123 = new Uint8Array(4);
                 LEN123[0] = len % 256;
@@ -125,14 +124,12 @@ class HTTPWasmClient : public HTTPClient {
                 LEN123[3] = len % 256;
                 len -= LEN123[3];
                 len /= 256;
-                Module.HEAPU8.set(LEN123, fileOnWasmHeap + 4);
+                HEAPU8.set(LEN123, fileOnWasmHeap + 4);
 
 		var headers = Uint8Array.from(Array.from(xhr.getAllResponseHeaders()).map(letter => letter.charCodeAt(0)));
 		len = headers.byteLength;
                 var headersOnWasmHeap = _malloc(len + 8);
-                for (var iii = 0; iii < len; iii++) {
-                    Module.HEAPU8[iii + headersOnWasmHeap + 8] = headers[iii];
-                }
+                HEAPU8.set(headers, headersOnWasmHeap + 8);
 
                 LEN123 = new Uint8Array(4);
                 LEN123[0] = len % 256;
@@ -147,7 +144,7 @@ class HTTPWasmClient : public HTTPClient {
                 LEN123[3] = len % 256;
                 len -= LEN123[3];
                 len /= 256;
-                Module.HEAPU8.set(LEN123, headersOnWasmHeap + 4);
+                HEAPU8.set(LEN123, headersOnWasmHeap + 4);
 
                 // Stash the real HTTP status in the (otherwise unused) first 4
                 // bytes of the headers buffer so C++ can recover it.
@@ -157,7 +154,7 @@ class HTTPWasmClient : public HTTPClient {
                 STAT123[1] = st123 % 256; st123 -= STAT123[1]; st123 /= 256;
                 STAT123[2] = st123 % 256; st123 -= STAT123[2]; st123 /= 256;
                 STAT123[3] = st123 % 256;
-                Module.HEAPU8.set(STAT123, headersOnWasmHeap + 0);
+                HEAPU8.set(STAT123, headersOnWasmHeap + 0);
 
 		len = headersOnWasmHeap;
                 LEN123 = new Uint8Array(4);
@@ -173,7 +170,7 @@ class HTTPWasmClient : public HTTPClient {
                 LEN123[3] = len % 256;
                 len -= LEN123[3];
                 len /= 256;
-                Module.HEAPU8.set(LEN123, fileOnWasmHeap);
+                HEAPU8.set(LEN123, fileOnWasmHeap);
 
                 return fileOnWasmHeap;
             },
@@ -365,9 +362,7 @@ console.log('HEAD', UTF8ToString(ptr1), UTF8ToString(ptr2));
 
                 var properArray = new Uint8Array(uInt8Array);
 
-                for (var iii = 0; iii < len; iii++) {
-                    Module.HEAPU8[iii + fileOnWasmHeap + 8] = properArray[iii];
-                }
+                HEAPU8.set(properArray, fileOnWasmHeap + 8);
 
                 var LEN123 = new Uint8Array(4);
                 LEN123[0] = len % 256;
@@ -382,14 +377,12 @@ console.log('HEAD', UTF8ToString(ptr1), UTF8ToString(ptr2));
                 LEN123[3] = len % 256;
                 len -= LEN123[3];
                 len /= 256;
-                Module.HEAPU8.set(LEN123, fileOnWasmHeap + 4);
+                HEAPU8.set(LEN123, fileOnWasmHeap + 4);
 
 		var headers = Uint8Array.from(Array.from(xhr.getAllResponseHeaders()).map(letter => letter.charCodeAt(0)));
 		len = headers.byteLength;
                 var headersOnWasmHeap = _malloc(len + 8);
-                for (var iii = 0; iii < len; iii++) {
-                    Module.HEAPU8[iii + headersOnWasmHeap + 8] = headers[iii];
-                }
+                HEAPU8.set(headers, headersOnWasmHeap + 8);
 
                 LEN123 = new Uint8Array(4);
                 LEN123[0] = len % 256;
@@ -404,7 +397,7 @@ console.log('HEAD', UTF8ToString(ptr1), UTF8ToString(ptr2));
                 LEN123[3] = len % 256;
                 len -= LEN123[3];
                 len /= 256;
-                Module.HEAPU8.set(LEN123, headersOnWasmHeap + 4);
+                HEAPU8.set(LEN123, headersOnWasmHeap + 4);
 
                 var st123 = xhr.status;
                 var STAT123 = new Uint8Array(4);
@@ -412,7 +405,7 @@ console.log('HEAD', UTF8ToString(ptr1), UTF8ToString(ptr2));
                 STAT123[1] = st123 % 256; st123 -= STAT123[1]; st123 /= 256;
                 STAT123[2] = st123 % 256; st123 -= STAT123[2]; st123 /= 256;
                 STAT123[3] = st123 % 256;
-                Module.HEAPU8.set(STAT123, headersOnWasmHeap + 0);
+                HEAPU8.set(STAT123, headersOnWasmHeap + 0);
 
 		len = headersOnWasmHeap;
                 LEN123 = new Uint8Array(4);
@@ -428,7 +421,7 @@ console.log('HEAD', UTF8ToString(ptr1), UTF8ToString(ptr2));
                 LEN123[3] = len % 256;
                 len -= LEN123[3];
                 len /= 256;
-                Module.HEAPU8.set(LEN123, fileOnWasmHeap);
+                HEAPU8.set(LEN123, fileOnWasmHeap);
 
                 return fileOnWasmHeap;
             },
@@ -623,7 +616,7 @@ res->headers.Insert(head, tail);
 			var post_payload = new Uint8Array($5);
 
 			for (var iii = 0; iii < $5; iii++) {
-				post_payload[iii] = Module.HEAPU8[iii + $4];
+				post_payload[iii] = HEAPU8[iii + $4];
 			}
 			xhr.send(post_payload);
                 } catch {
@@ -638,9 +631,7 @@ res->headers.Insert(head, tail);
 
                 var properArray = new Uint8Array(uInt8Array);
 
-                for (var iii = 0; iii < len; iii++) {
-                    Module.HEAPU8[iii + fileOnWasmHeap + 8] = properArray[iii];
-                }
+                HEAPU8.set(properArray, fileOnWasmHeap + 8);
                 var LEN123 = new Uint8Array(4);
                 LEN123[0] = len % 256;
                 len -= LEN123[0];
@@ -654,14 +645,14 @@ res->headers.Insert(head, tail);
                 LEN123[3] = len % 256;
                 len -= LEN123[3];
                 len /= 256;
-                Module.HEAPU8.set(LEN123, fileOnWasmHeap + 4);
+                HEAPU8.set(LEN123, fileOnWasmHeap + 4);
                 var st123 = xhr.status;
                 var STAT123 = new Uint8Array(4);
                 STAT123[0] = st123 % 256; st123 -= STAT123[0]; st123 /= 256;
                 STAT123[1] = st123 % 256; st123 -= STAT123[1]; st123 /= 256;
                 STAT123[2] = st123 % 256; st123 -= STAT123[2]; st123 /= 256;
                 STAT123[3] = st123 % 256;
-                Module.HEAPU8.set(STAT123, fileOnWasmHeap + 0);
+                HEAPU8.set(STAT123, fileOnWasmHeap + 0);
                 return fileOnWasmHeap;
             },
             path.c_str(), n, z, "POST", payload, buffer_length);
@@ -807,7 +798,7 @@ res->headers.Insert(head, tail);
 			var post_payload = new Uint8Array($5);
 
 			for (var iii = 0; iii < $5; iii++) {
-				post_payload[iii] = Module.HEAPU8[iii + $4];
+				post_payload[iii] = HEAPU8[iii + $4];
 			}
 			xhr.send(post_payload);
                 } catch {
@@ -828,9 +819,7 @@ res->headers.Insert(head, tail);
 
                 var properArray = new Uint8Array(uInt8Array);
 
-                for (var iii = 0; iii < len; iii++) {
-                    Module.HEAPU8[iii + fileOnWasmHeap + 8] = properArray[iii];
-                }
+                HEAPU8.set(properArray, fileOnWasmHeap + 8);
                 var LEN123 = new Uint8Array(4);
                 LEN123[0] = len % 256;
                 len -= LEN123[0];
@@ -844,14 +833,14 @@ res->headers.Insert(head, tail);
                 LEN123[3] = len % 256;
                 len -= LEN123[3];
                 len /= 256;
-                Module.HEAPU8.set(LEN123, fileOnWasmHeap + 4);
+                HEAPU8.set(LEN123, fileOnWasmHeap + 4);
                 var st123 = xhr.status;
                 var STAT123 = new Uint8Array(4);
                 STAT123[0] = st123 % 256; st123 -= STAT123[0]; st123 /= 256;
                 STAT123[1] = st123 % 256; st123 -= STAT123[1]; st123 /= 256;
                 STAT123[2] = st123 % 256; st123 -= STAT123[2]; st123 /= 256;
                 STAT123[3] = st123 % 256;
-                Module.HEAPU8.set(STAT123, fileOnWasmHeap + 0);
+                HEAPU8.set(STAT123, fileOnWasmHeap + 0);
                 return fileOnWasmHeap;
             },
             path.c_str(), n, z, "PUT", payload, buffer_length);
@@ -998,9 +987,7 @@ res->headers.Insert(head, tail);
 
                 var properArray = new Uint8Array(uInt8Array);
 
-                for (var iii = 0; iii < len; iii++) {
-                    Module.HEAPU8[iii + fileOnWasmHeap + 8] = properArray[iii];
-                }
+                HEAPU8.set(properArray, fileOnWasmHeap + 8);
                 var LEN123 = new Uint8Array(4);
                 LEN123[0] = len % 256;
                 len -= LEN123[0];
@@ -1014,14 +1001,14 @@ res->headers.Insert(head, tail);
                 LEN123[3] = len % 256;
                 len -= LEN123[3];
                 len /= 256;
-                Module.HEAPU8.set(LEN123, fileOnWasmHeap + 4);
+                HEAPU8.set(LEN123, fileOnWasmHeap + 4);
                 var st123 = xhr.status;
                 var STAT123 = new Uint8Array(4);
                 STAT123[0] = st123 % 256; st123 -= STAT123[0]; st123 /= 256;
                 STAT123[1] = st123 % 256; st123 -= STAT123[1]; st123 /= 256;
                 STAT123[2] = st123 % 256; st123 -= STAT123[2]; st123 /= 256;
                 STAT123[3] = st123 % 256;
-                Module.HEAPU8.set(STAT123, fileOnWasmHeap + 0);
+                HEAPU8.set(STAT123, fileOnWasmHeap + 0);
                 return fileOnWasmHeap;
             },
             path.c_str(), n, z, "DELETE");
